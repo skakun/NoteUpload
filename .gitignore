@@ -101,4 +101,7 @@ venv.bak/
 /site
 
 # mypy
+
+
+*.wsgi
 .mypy_cache/
