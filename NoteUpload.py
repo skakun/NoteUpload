@@ -123,11 +123,15 @@ def log_in():
 			session['username']=username
 			return redirect(url_for('render_main_view'))
 	return "pozdro"
-@app.route('/notewiev/',methods=['POST','GET'])
+@app.route('/noteview/',methods=['POST','GET'])
 def render_main_view():
 	print(session['username'])
 	if session['username'] is None or session['username']=="":
 		return "You should log in first"
 	return render_template('notes.html',user=session['username'])
+@app.route('/logout/',methods=['POST','GET'])
+def log_off():
+	session['username']=""
+	return redirect(url_for('hello'))
 if __name__ == "__main__":
     app.run()
