@@ -12,6 +12,9 @@ def c_entropy(s):
 	special_chars=" !\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
 	if any( c in s for c in special_chars):
 		N+=33
-	if N=0:
+	if N==0:
 		return 0
 	return log2(N)*len(s)
+def fprint(body,filename):
+	with open(filename, 'a') as f:
+		f.write(body)

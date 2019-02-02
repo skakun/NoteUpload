@@ -1,16 +1,18 @@
-from flask import Flask,render_template,redirect, url_for, request,Blueprint,flash
+from flask import Flask,render_template,redirect, url_for, request,Blueprint,flash,jsonify
 from config import appsecret,appsalt, BaseConfig
 import bcrypt
 from MySQLdb import escape_string as thwart
 from flask_mail import Mail
+import sys
+from util import fprint
+import json
 app = Flask(__name__)
 _config=BaseConfig()
 app.config.from_object(_config)
 mail = Mail(app)
+#sys.stdout = open('output.logs', 'w')
 ########app.config["SECRET_KEY"]=appsecret
 ########app.config["SECURITY_PASSWORD_SALT"]=appsalt
-
-
 
 
 from mail_handler import generate_confirmation_token, confirm_token,send_email
@@ -86,11 +88,15 @@ def confirm_email(token):
 		email = confirm_token(token)
 	except:
 		flash('The confirmation link is invalid or has expired.', 'danger')
-	user_checked = c.execute("select checked from user where email=(%s)",[thwart(email)]).fetchone()[0]
-	if user_checked:
+	c.execute("select checked from user where email=(%s)",[thwart(str(email))])
+	user_checked=1
+	resp=c.fetchall()
+	user_checked=resp[0][0]
+	print(user_checked)
+	if user_checked==1:
 		flash('Account already confirmed. Please login.', 'success')
 	else:
-		c.execute(" update user set checked=1 where email=(%s)",[thwart(email)])
+		c.execute(" update user set checked=1 where email=(%s)",[thwart(str(email))])
 		flash('You have confirmed your account. Thanks!', 'success')
 	conn.commit()
 	c.close()
