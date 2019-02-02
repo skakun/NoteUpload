@@ -1,12 +1,19 @@
-from flask import Flask,render_template,redirect, url_for, request
-from werkzeug.security import generate_password_hash, check_password_hash
-from config import secret
+from flask import Flask,render_template,redirect, url_for, request,Blueprint,flash
+from config import appsecret,appsalt, BaseConfig
 import bcrypt
 from MySQLdb import escape_string as thwart
-
+from flask_mail import Mail
 app = Flask(__name__)
-app.config["SECRET_KEY"]=secret
+_config=BaseConfig()
+app.config.from_object(_config)
+mail = Mail(app)
+########app.config["SECRET_KEY"]=appsecret
+########app.config["SECURITY_PASSWORD_SALT"]=appsalt
 
+
+
+
+from mail_handler import generate_confirmation_token, confirm_token,send_email
 def crypt(passwd):
 	return bcrypt.hashpw(passwd.encode('utf-8'),bcrypt.gensalt())
 from dbconnect import connection
@@ -49,7 +56,6 @@ class RegistrationForm(Form):
 ########@app.route('/NoteUpload/register/',methods=["GET"])
 ########def reg_form():
 ########	return render_template('register.html')
-
 @app.route('/NoteUpload/register/',methods=["GET","POST"])
 def on_register():
 	form = RegistrationForm(request.form)
@@ -59,12 +65,37 @@ def on_register():
 		password=crypt(password)
 		email=form.email.data
 		c, conn=connection()
-		c.execute("INSERT INTO  user(username,password,email) VALUES(%s,%s,%s)",( thwart(username),thwart(password),thwart(email)))
+		c.execute("INSERT INTO  user(username,password,email,checked) VALUES(%s,%s,%s,0)",( thwart(username),thwart(password),thwart(email)))
 		conn.commit()
 		c.close()
 		conn.close()
+
+		token = generate_confirmation_token(email)
+		confirm_url = url_for('confirm_email', token=token, _external=True)
+		html = render_template('reg_mail_template.html', confirm_url=confirm_url)
+		subject = "Please confirm your email"
+		send_email(email, subject, html)
+		flash('A confirmation email has been sent via email.', 'success')
+
 		return redirect((url_for('hello')))
 	return render_template('register.html',form=form)
+@app.route('/confirm/<token>')
+def confirm_email(token):
+	c,conn=connection()
+	try:
+		email = confirm_token(token)
+	except:
+		flash('The confirmation link is invalid or has expired.', 'danger')
+	user_checked = c.execute("select checked from user where email=(%s)",[thwart(email)]).fetchone()[0]
+	if user_checked:
+		flash('Account already confirmed. Please login.', 'success')
+	else:
+		c.execute(" update user set checked=1 where email=(%s)",[thwart(email)])
+		flash('You have confirmed your account. Thanks!', 'success')
+	conn.commit()
+	c.close()
+	conn.close()
+	return redirect(url_for('hello'))
 
 if __name__ == "__main__":
     app.run()

@@ -105,4 +105,5 @@ venv.bak/
 
 *.wsgi
 config.py
+project_config.py
 .mypy_cache/
