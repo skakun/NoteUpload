@@ -1,4 +1,4 @@
-from flask import Flask,render_template,redirect, url_for, request,Blueprint,flash,jsonify
+from flask import Flask,render_template,redirect, url_for, request,Blueprint,flash,jsonify,session
 from config import appsecret,appsalt, BaseConfig
 import bcrypt
 from MySQLdb import escape_string as thwart
@@ -103,5 +103,31 @@ def confirm_email(token):
 	conn.close()
 	return redirect(url_for('hello'))
 
+@app.route('/login/',methods=['POST','GET'])
+def log_in():
+	c,conn=connection()
+	query=""
+	if request.method=="GET":
+		return render_template("login.html")
+	if request.method=="POST":
+		row_num=c.execute("select * from user where username=(%s)",[thwart(request.form['login'])])
+		if row_num==0:
+			return "Wrong passess"
+		query=c.fetchall()[0]
+		hashpass=query[2].encode('utf-8')
+		checked=query[4]
+		username=query[1]
+		if  hashpass!=bcrypt.hashpw(request.form["password"].encode('utf-8'),hashpass) or checked!=1:
+			return "Wrong passess"
+		else:
+			session['username']=username
+			return redirect(url_for('render_main_view'))
+	return "pozdro"
+@app.route('/notewiev/',methods=['POST','GET'])
+def render_main_view():
+	print(session['username'])
+	if session['username'] is None or session['username']=="":
+		return "You should log in first"
+	return render_template('notes.html',user=session['username'])
 if __name__ == "__main__":
     app.run()
