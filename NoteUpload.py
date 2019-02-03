@@ -105,6 +105,7 @@ def confirm_email(token):
 	c.close()
 	conn.close()
 	os.makedirs(app.config["WORKING_DIR"]+"notes/"+username+"/")
+	os.makedirs(app.config["WORKING_DIR"]+"notes/"+username+"/recived")
 	return redirect(url_for('hello'))
 
 @app.route('/login/',methods=['POST','GET'])
@@ -134,6 +135,7 @@ def render_main_view(file_to_preview):
 	if session['username'] is None or session['username']=="":
 		return "You should log in first"
 	filelist=os.listdir(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/')
+	filelist=[f for f in filelist if os.path.isfile(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+f)]
 	preview=""
 	if not ( file_to_preview is None or file_to_preview==""):
 		f=open(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+file_to_preview,"r")
@@ -157,7 +159,7 @@ def remove_accout():
 @app.route('/upload/',methods=["POST"])
 def upload_note():
 	if session['username'] is None or session['username']=="":
-		return "pozdro"
+		return "You should have been signed up"
 ########c,conn=connection()
 ########row_num=c.execute("select * from user where username=(%s)",[thwart(session["username"])])
 ########if row_num==0:
@@ -168,6 +170,26 @@ def upload_note():
 	f=open(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+title,"w+")
 	f.write(note)
 	f.close()
+	return redirect(url_for('render_main_view'))
+@app.route('/share/', methods=["POST","GET"])
+def share_note():
+	if session['username'] is None or session['username']=="":
+		return "You should have been signed up"
+	if request.method=="GET":
+		filename=request.form["filename"]
+		return render_template("share.html",filename=filename)
+	if request.method=="POST":
+		filename=request.form["filename"]+".txt"
+		note_reciver=request.form["note_reciver"]
+		sharer=session['username']
+		c,conn=connection()
+		row_count=c.execute("select * from user where username=(%s)",[thwart(note_reciver)])
+		conn.commit()
+		c.close()
+		conn.close()
+		if row_count==0:
+			return "No such user"
+		os.symlink(app.config["WORKING_DIR"]+"notes/"+sharer+"/"+filename,app.config["WORKING_DIR"]+"notes/"+reciver+"/recived/"+filename)
 	return redirect(url_for('render_main_view'))
 
 if __name__ == "__main__":
