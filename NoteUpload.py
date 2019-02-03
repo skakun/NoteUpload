@@ -171,25 +171,30 @@ def upload_note():
 	f.write(note)
 	f.close()
 	return redirect(url_for('render_main_view'))
-@app.route('/share/', methods=["POST","GET"])
-def share_note():
+@app.route('/shareform/',methods=["POST"])
+def share_form():
 	if session['username'] is None or session['username']=="":
 		return "You should have been signed up"
-	if request.method=="GET":
-		filename=request.form["filename"]
-		return render_template("share.html",filename=filename)
-	if request.method=="POST":
-		filename=request.form["filename"]+".txt"
-		note_reciver=request.form["note_reciver"]
-		sharer=session['username']
-		c,conn=connection()
-		row_count=c.execute("select * from user where username=(%s)",[thwart(note_reciver)])
-		conn.commit()
-		c.close()
-		conn.close()
-		if row_count==0:
-			return "No such user"
-		os.symlink(app.config["WORKING_DIR"]+"notes/"+sharer+"/"+filename,app.config["WORKING_DIR"]+"notes/"+reciver+"/recived/"+filename)
+#if request.method=="GET":
+	print(request.form.to_dict())
+	filename=request.form["filename"]
+	return render_template("share.html",filename=filename)
+@app.route('/share/', methods=["POST","GET"])
+def share_note():
+#if request.method=="POST":
+	if session['username'] is None or session['username']=="":
+		return "You should have been signed up"
+	filename=request.form["filename"]
+	note_reciver=request.form["note_reciver"]
+	sharer=session['username']
+	c,conn=connection()
+	row_count=c.execute("select * from user where username=(%s)",[thwart(note_reciver)])
+	conn.commit()
+	c.close()
+	conn.close()
+	if row_count==0:
+		return "No such user"
+	os.symlink(app.config["WORKING_DIR"]+"notes/"+sharer+"/"+filename,app.config["WORKING_DIR"]+"notes/"+note_reciver+"/recived/"+filename)
 	return redirect(url_for('render_main_view'))
 
 if __name__ == "__main__":

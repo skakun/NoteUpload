@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+	<h2> Press name of user you want to share note {{filename}} with.</h2>
+        <form  method='POST' action="/share/"  class='form'> 
+                Login:<br>
+                <input type="text" name="note_reciver" ><br>
+                <input type="submit" value="share" >
+		<input type="hidden" name="filename" value="{{filename}}">
+        </form>
+
+        <form  method='GET' action='/noteview/' class='form'> 
+                <input type="submit" value="cancel" >
+	</form>
+</body>
+</html>
