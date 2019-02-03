@@ -128,7 +128,7 @@ def log_in():
 			session['username']=username
 			return redirect(url_for('render_main_view'))
 	return "pozdro"
-@app.route('/noteview/<file_to_preview>',methods=['POST','GET'])
+@app.route('/noteview/<path:file_to_preview>',methods=['POST','GET'])
 @app.route('/noteview/',methods=['POST','GET'],defaults={'file_to_preview':None})
 def render_main_view(file_to_preview):
 	print(session['username'])
@@ -136,12 +136,15 @@ def render_main_view(file_to_preview):
 		return "You should log in first"
 	filelist=os.listdir(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/')
 	filelist=[f for f in filelist if os.path.isfile(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+f)]
+
+	shared_filelist=os.listdir(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/recived/')
+	print(shared_filelist)
 	preview=""
 	if not ( file_to_preview is None or file_to_preview==""):
 		f=open(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+file_to_preview,"r")
 		preview=f.read()
 		f.close()
-	return render_template('notes.html',user=session['username'],filelist=filelist,previewed=preview)
+	return render_template('notes.html',user=session['username'],filelist=filelist,previewed=preview,shared_filelist=shared_filelist)
 @app.route('/logout/',methods=['POST','GET'])
 def log_off():
 	session['username']=""

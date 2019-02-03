@@ -6,21 +6,30 @@
   <body>
 <h1> NoteUpload</h1>
 <br>
+<h2>
 Hello, {{ user}}.<br>
 These are your notes:
+</h2>
 <br>
 {%for file in filelist %}
 
 <form  style="display:inline-block;" action="/noteview/{{file}}" method="POST">
 	<input class="submitLink" type="submit" value={{file}} />
 </form>
-<form  style="display:inline-block;" action="/share/" method="POST">
+<form  style="display:inline-block;" action="/shareform/" method="POST">
 	<input class="submitLink" type="submit" value="share" />
 	<input type="hidden" name="filename" value="{{file}}">
 </form>
 <br>
 {%endfor%}
 <br>
+<h2>Here are notes shared with you</h2>
+{%for sfile in shared_filelist %}
+
+<form  style="display:inline-block;" action="/noteview/recived/{{sfile}}" method="POST">
+	<input class="submitLink" type="submit" value={{sfile}} />
+</form>
+{%endfor%}
 <h2>Curently previewed</h2>
 <br>
 <input type="text" name="preview" value="{{previewed}}" readonly />
