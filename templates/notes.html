@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<!--
-    <link rel="stylesheet" type="text/css" href="/michalk2/webapp/static/styles.css">
-    -->
+    <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
   </head>
   <body>
 <h1> NoteUpload</h1>
@@ -11,7 +9,17 @@
 Hello, {{ user}}.<br>
 These are your notes:
 <br>
+{%for file in filelist %}
+
+<form  style="display:inline-block;" action="/noteview/{{file}}" method="POST">
+	<input class="submitLink" type="submit" value={{file}} />
+</form>
+{%endfor%}
 <br>
+<h2>Curently previewed</h2>
+<br>
+<input type="text" name="preview" value="{{previewed}}" readonly />
+
 <h2> Upload new note </h2>
 
 <form action="/upload/" method="POST" >     

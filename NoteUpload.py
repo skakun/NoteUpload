@@ -127,12 +127,19 @@ def log_in():
 			session['username']=username
 			return redirect(url_for('render_main_view'))
 	return "pozdro"
-@app.route('/noteview/',methods=['POST','GET'])
-def render_main_view():
+@app.route('/noteview/<file_to_preview>',methods=['POST','GET'])
+@app.route('/noteview/',methods=['POST','GET'],defaults={'file_to_preview':None})
+def render_main_view(file_to_preview):
 	print(session['username'])
 	if session['username'] is None or session['username']=="":
 		return "You should log in first"
-	return render_template('notes.html',user=session['username'])
+	filelist=os.listdir(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/')
+	preview=""
+	if not ( file_to_preview is None or file_to_preview==""):
+		f=open(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+file_to_preview,"r")
+		preview=f.read()
+		f.close()
+	return render_template('notes.html',user=session['username'],filelist=filelist,previewed=preview)
 @app.route('/logout/',methods=['POST','GET'])
 def log_off():
 	session['username']=""
