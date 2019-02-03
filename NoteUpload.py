@@ -6,6 +6,8 @@ from flask_mail import Mail
 import sys
 from util import fprint
 import json
+import shutil
+import os
 app = Flask(__name__)
 _config=BaseConfig()
 app.config.from_object(_config)
@@ -88,10 +90,11 @@ def confirm_email(token):
 		email = confirm_token(token)
 	except:
 		flash('The confirmation link is invalid or has expired.', 'danger')
-	c.execute("select checked from user where email=(%s)",[thwart(str(email))])
+	c.execute("select * from user where email=(%s)",[thwart(str(email))])
 	user_checked=1
 	resp=c.fetchall()
-	user_checked=resp[0][0]
+	user_checked=resp[0][4]
+	username=resp[0][1]
 	print(user_checked)
 	if user_checked==1:
 		flash('Account already confirmed. Please login.', 'success')
@@ -101,6 +104,7 @@ def confirm_email(token):
 	conn.commit()
 	c.close()
 	conn.close()
+	os.makedirs(app.config["WORKING_DIR"]+"notes/"+username+"/")
 	return redirect(url_for('hello'))
 
 @app.route('/login/',methods=['POST','GET'])
@@ -133,5 +137,31 @@ def render_main_view():
 def log_off():
 	session['username']=""
 	return redirect(url_for('hello'))
+@app.route('/delaccount/',methods=['POST','GET'])
+def remove_accout():
+	shutil.rmtree(app.config['WORKING_DIR']+'notes/'+session['username']+'/')
+	c,conn=connection()	
+	c.execute("delete from user where username=(%s)",[thwart(session["username"])])
+	conn.commit()
+	c.close()
+	conn.close()
+	session['username']=""
+	return redirect(url_for('hello'))
+@app.route('/upload/',methods=["POST"])
+def upload_note():
+	if session['username'] is None or session['username']=="":
+		return "pozdro"
+########c,conn=connection()
+########row_num=c.execute("select * from user where username=(%s)",[thwart(session["username"])])
+########if row_num==0:
+########	return "pozdro"
+########result=c.fetchall()[0]
+	title=request.form["ntitle"]+".txt"
+	note=request.form["note"]
+	f=open(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+title,"w+")
+	f.write(note)
+	f.close()
+	return redirect(url_for('render_main_view'))
+
 if __name__ == "__main__":
     app.run()
