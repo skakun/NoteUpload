@@ -32,7 +32,7 @@ These are your notes:
 {%endfor%}
 <h2>Curently previewed</h2>
 <br>
-<input type="text" style=" height:200px; width: 300px; "class="bigBox" name="preview" value="{{previewed}}" readonly />
+<textarea style=" height:500px; width: 700px; "class="bigBox" name="preview"  readonly >{{previewed}}</textarea>
 
 <h2> Upload new note </h2>
 
@@ -40,7 +40,7 @@ These are your notes:
 	Title:<br>
 	<input type="text" name="ntitle"><br>
 	Note:<br>
-	<input type="text" style=" height:200px; width: 300px; "name="note"><br>
+	<textarea rows="4" cols="50" style=" height:500px; width: 700px; "name="note"></textarea><br>
 	<br>
         <input type="submit" value="submit" style="display:inline-block;" >
 </form>
