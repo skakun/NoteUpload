@@ -148,7 +148,7 @@ def render_main_view(file_to_preview):
 @app.route('/logout/',methods=['POST','GET'])
 def log_off():
 	session['username']=""
-	return redirect(url_for('hello'))
+	return  render_template('redir_to_login.html',message="You managed to logout successfully. Proceed to login page")
 @app.route('/delaccount/',methods=['POST','GET'])
 def remove_accout():
 	shutil.rmtree(app.config['WORKING_DIR']+'notes/'+session['username']+'/')
@@ -201,9 +201,49 @@ def share_note():
 	return redirect(url_for('render_main_view'))
 @app.route('/resetpassword/',methods=["POST","GET"])
 def reset_password():
-	if session['username'] is None or session['username']=="":
-		return "You should have signed up"
+########if session['username'] is None or session['username']=="":
+########	return "You should have signed up"
 	if request.method=="GET":
 		return render_template('reset.html')
+	if request.method=="POST":
+		print("at least we are here")
+		username=request.form["login"]	
+		c,conn=connection()
+		row_count=c.execute("select * from user where username=(%s)",[thwart(username)])
+		if row_count==0:
+			return render_template("redir_to_login.html",message="Pressed user data is wrong")
+		response=c.fetchall()[0]
+		email=request.form["email"]
+		if response[3]!=email or request.form["password"]!=request.form["reapass"]:
+			return render_template("redir_to_login.html",message="Pressed user data is wrong")
+		c.execute("update user set altpass=(%s) where username=(%s)",[thwart(crypt(request.form["password"])),thwart(username)])
+		conn.commit()
+		c.close()
+		conn.close()
+		session['username']=""
+
+		token = generate_confirmation_token(email)
+		confirm_url = url_for('confirm_pass_reset_email', token=token, _external=True)
+		html = render_template('reset_password_mail_template.html', confirm_url=confirm_url)
+		subject = "Please confirm password change"
+		send_email(email, subject, html)
+		flash('A confirmation email has been sent via email.', 'success')
+
+	return  render_template('redir_to_login.html',message="Mail for confirmation of changing password is sent. Press url in it. You can proceed to login page")
+
+@app.route('/confirm_pass_reset_email/<token>')
+def confirm_pass_reset_email(token):
+	try:
+		email=confirm_token(token)
+	except:
+		return  render_template('redir_to_login.html',message="Token wrong or expired. Proceed to login page")
+	c,conn=connection()
+	c.execute("update user set password=altpass where email=(%s) ",[thwart(email)])
+	conn.commit()
+	c.close()
+	conn.close()
+	session["username"]=""
+	return  render_template('redir_to_login.html',message="Password changed succesfully. Proceed to login")
+
 if __name__ == "__main__":
     app.run()

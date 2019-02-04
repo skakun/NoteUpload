@@ -27,8 +27,9 @@ These are your notes:
 {%for sfile in shared_filelist %}
 
 <form  style="display:inline-block;" action="/noteview/recived/{{sfile}}" method="POST">
-	<input class="submitLink" type="submit" value={{sfile}} />
+	<input class="submitLink" type="submit" value={{sfile}} /><br>
 </form>
+<br>
 {%endfor%}
 <h2>Curently previewed</h2>
 <br>
