@@ -199,6 +199,11 @@ def share_note():
 		return "No such user"
 	os.symlink(app.config["WORKING_DIR"]+"notes/"+sharer+"/"+filename,app.config["WORKING_DIR"]+"notes/"+note_reciver+"/recived/"+filename)
 	return redirect(url_for('render_main_view'))
-
+@app.route('/resetpassword/',methods=["POST","GET"])
+def reset_password():
+	if session['username'] is None or session['username']=="":
+		return "You should have signed up"
+	if request.method=="GET":
+		return render_template('reset.html')
 if __name__ == "__main__":
     app.run()
