@@ -175,9 +175,13 @@ def upload_note():
 ########result=c.fetchall()[0]
 	title=request.form["ntitle"]+".txt"
 	note=request.form["note"]
+	public_filelist=os.listdir(app.config["WORKING_DIR"]+"notes/public/")
+	if request.form.get("public_upload")=="on" and title in public_filelist:
+		return render_template("redir_to_main.html", message="There is already publicly accesible note called "+title+". To avoid conflict create note called diffirently")
 	f=open(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+title,"w+")
 	f.write(note)
 	f.close()
+
 	print("checked?:")
 	print(request.form.get("public_upload"))
 	if request.form.get("public_upload")=="on":
@@ -207,6 +211,9 @@ def share_note():
 	conn.close()
 	if row_count==0:
 		return "No such user"
+	link=app.config["WORKING_DIR"]+"notes/"+note_reciver+"/recived/"+filename
+	if os.path.islink(link):
+		return render_template('redir_to_main.html', message="There is already note called " +filename+" shared to "+note_reciver+". To avoid conflict, create note with diffrent name to share it.")
 	os.symlink(app.config["WORKING_DIR"]+"notes/"+sharer+"/"+filename,app.config["WORKING_DIR"]+"notes/"+note_reciver+"/recived/"+filename)
 	return redirect(url_for('render_main_view'))
 @app.route('/resetpassword/',methods=["POST","GET"])
