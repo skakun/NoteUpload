@@ -4,7 +4,7 @@ import bcrypt
 from MySQLdb import escape_string as thwart
 from flask_mail import Mail
 import sys
-from util import fprint
+from util import fprint, c_entropy
 import json
 import shutil
 import os
@@ -12,8 +12,9 @@ app = Flask(__name__)
 _config=BaseConfig()
 app.config.from_object(_config)
 mail = Mail(app)
+from flask_sslify import SSLify
 from datetime import timedelta
-
+#sslify = SSLify(app)
 from mail_handler import generate_confirmation_token, confirm_token,send_email
 def crypt(passwd):
 	return bcrypt.hashpw(passwd.encode('utf-8'),bcrypt.gensalt())
@@ -39,6 +40,7 @@ class RegistrationForm(Form):
 	confirm = PasswordField('Repeat Password')
 	accept_tos = BooleanField('I accept the TOS', [validators.DataRequired()])
 	def validate(self):
+		special_chars=" !\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
 		rv=Form.validate(self)
 		flag=True
 		if not rv:
@@ -52,6 +54,12 @@ class RegistrationForm(Form):
 		if row_count >0:
 			self.email.errors.append("Email already in use")
 			flag=False
+		print(c_entropy(self.password.data))
+		if  c_entropy(self.password.data)<30:
+			self.password.errors.append("Password too weak")
+			flag=False
+		if any( c in self.username.data for c in special_chars):
+			self.username.errors.append("Username should not contain special characters")
 		return flag
 
 
@@ -61,6 +69,7 @@ class RegistrationForm(Form):
 ########	return render_template('register.html')
 @app.route('/NoteUpload/register/',methods=["GET","POST"])
 def on_register():
+	session["login_count"]=0
 	form = RegistrationForm(request.form)
 	if request.method == 'POST' and form.validate():
 		username=form.username.data
@@ -110,20 +119,28 @@ def confirm_email(token):
 @app.route('/login/',methods=['POST','GET'])
 def log_in():
 	c,conn=connection()
+	if "login_count"  in session and  session["login_count"] >5:
+		return  "To many failed attempts on this computer. Access blocked. Contact administrator"
+	if "login_count" not in session:
+		session["login_count"]=0
 	query=""
 	if request.method=="GET":
 		return render_template("login.html")
 	if request.method=="POST":
 		row_num=c.execute("select * from user where username=(%s)",[thwart(request.form['login'])])
 		if row_num==0:
+			session["login_count"]+=1
 			return "Wrong passess"
 		query=c.fetchall()[0]
 		hashpass=query[2].encode('utf-8')
 		checked=query[4]
 		username=query[1]
 		if  hashpass!=bcrypt.hashpw(request.form["password"].encode('utf-8'),hashpass) or checked!=1:
+			session["login_count"]+=1
 			return "Wrong passess"
+
 		else:
+			session["login_count"]=0
 			session['username']=username
 			return redirect(url_for('render_main_view'))
 	return "pozdro"
@@ -167,11 +184,6 @@ def remove_accout():
 def upload_note():
 	if session['username'] is None or session['username']=="":
 		return "You should have been signed up"
-########c,conn=connection()
-########row_num=c.execute("select * from user where username=(%s)",[thwart(session["username"])])
-########if row_num==0:
-########	return "pozdro"
-########result=c.fetchall()[0]
 	title=request.form["ntitle"]+".txt"
 	note=request.form["note"]
 	public_filelist=os.listdir(app.config["WORKING_DIR"]+"notes/public/")
@@ -222,9 +234,11 @@ def reset_password():
 	if request.method=="GET":
 		return render_template('reset.html')
 	if request.method=="POST":
-		print("at least we are here")
+	#print("at least we are here")
 		username=request.form["login"]	
 		c,conn=connection()
+		if  c_entropy(request.form["password"])<30:
+			return render_template("redir_to_reset.html",message="password too weak")
 		row_count=c.execute("select * from user where username=(%s)",[thwart(username)])
 		if row_count==0:
 			return render_template("redir_to_login.html",message="Pressed user data is wrong")
@@ -262,4 +276,5 @@ def confirm_pass_reset_email(token):
 	return  render_template('redir_to_login.html',message="Password changed succesfully. Proceed to login")
 
 if __name__ == "__main__":
-    app.run()
+   app.run(ssl_context='adhoc')
+  #app.run()
