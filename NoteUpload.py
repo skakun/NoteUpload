@@ -149,7 +149,7 @@ def render_main_view(file_to_preview):
 		f=open(app.config["WORKING_DIR"]+"notes/"+subdir+'/'+file_to_preview,"r")
 		preview=f.read()
 		f.close()
-	return render_template('notes.html',user=session['username'],filelist=filelist,previewed=preview,shared_filelist=shared_filelist,public_filelist=public_filelist)
+	return render_template('notes.html',user=session['username'],filelist=filelist,previewed=preview,shared_filelist=shared_filelist,public_filelist=public_filelist, preview_title=file_to_preview)
 @app.route('/logout/',methods=['POST','GET'])
 def log_off():
 	session['username']=""
