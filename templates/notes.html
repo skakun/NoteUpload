@@ -31,6 +31,15 @@ These are your notes:
 </form>
 <br>
 {%endfor%}
+<h2> Here are publicly avaible</h2>
+
+{%for pfile in public_filelist %}
+
+<form  style="display:inline-block;" action="/noteview/public/{{pfile}}" method="POST">
+	<input class="submitLink" type="submit" value={{pfile}} /><br>
+</form>
+<br>
+{%endfor%}
 <h2>Curently previewed</h2>
 <br>
 <textarea style=" height:500px; width: 700px; "class="bigBox" name="preview"  readonly >{{previewed}}</textarea>
@@ -38,6 +47,8 @@ These are your notes:
 <h2> Upload new note </h2>
 
 <form action="/upload/" style="display:inline-block;" method="POST" >     
+
+  <input type="checkbox" value="on" name="public_upload" > Share note with everyone<br>
 	Title:<br>
 	<input type="text" name="ntitle"><br>
 	Note:<br>

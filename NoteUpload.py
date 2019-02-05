@@ -138,13 +138,18 @@ def render_main_view(file_to_preview):
 	filelist=[f for f in filelist if os.path.isfile(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+f)]
 
 	shared_filelist=os.listdir(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/recived/')
-	print(shared_filelist)
+	public_filelist=os.listdir(app.config["WORKING_DIR"]+"notes/public/")
+	print(file_to_preview)
 	preview=""
+	subdir=session["username"]
 	if not ( file_to_preview is None or file_to_preview==""):
-		f=open(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+file_to_preview,"r")
+		if file_to_preview.startswith("public/"):
+			subdir="public"
+			file_to_preview=file_to_preview.replace("public/","")
+		f=open(app.config["WORKING_DIR"]+"notes/"+subdir+'/'+file_to_preview,"r")
 		preview=f.read()
 		f.close()
-	return render_template('notes.html',user=session['username'],filelist=filelist,previewed=preview,shared_filelist=shared_filelist)
+	return render_template('notes.html',user=session['username'],filelist=filelist,previewed=preview,shared_filelist=shared_filelist,public_filelist=public_filelist)
 @app.route('/logout/',methods=['POST','GET'])
 def log_off():
 	session['username']=""
@@ -173,6 +178,11 @@ def upload_note():
 	f=open(app.config["WORKING_DIR"]+"notes/"+session["username"]+'/'+title,"w+")
 	f.write(note)
 	f.close()
+	print("checked?:")
+	print(request.form.get("public_upload"))
+	if request.form.get("public_upload")=="on":
+		print("checked")
+		os.symlink(app.config["WORKING_DIR"]+"notes/"+session['username']+"/"+title,app.config["WORKING_DIR"]+"notes/public/"+title)
 	return redirect(url_for('render_main_view'))
 @app.route('/shareform/',methods=["POST"])
 def share_form():
