@@ -12,10 +12,7 @@ app = Flask(__name__)
 _config=BaseConfig()
 app.config.from_object(_config)
 mail = Mail(app)
-#sys.stdout = open('output.logs', 'w')
-########app.config["SECRET_KEY"]=appsecret
-########app.config["SECURITY_PASSWORD_SALT"]=appsalt
-
+from datetime import timedelta
 
 from mail_handler import generate_confirmation_token, confirm_token,send_email
 def crypt(passwd):
@@ -27,6 +24,8 @@ def hello():
 
 @app.route('/login/')
 def on_login():
+	session.pernament=True
+	app.config['PERMANENT_SESSION_LIFETIME'] =  timedelta(minutes=5)
 	return render_template('login.html')
 
 from wtforms import Form, BooleanField, StringField, PasswordField, validators
