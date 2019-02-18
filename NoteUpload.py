@@ -17,7 +17,7 @@ from datetime import timedelta
 #sslify = SSLify(app)
 from mail_handler import generate_confirmation_token, confirm_token,send_email
 def crypt(passwd):
-	return bcrypt.hashpw(passwd.encode('utf-8'),bcrypt.gensalt())
+	return bcrypt.hashpw(passwd.encode('utf-8'),bcrypt.gensalt(),rounds=15)
 from dbconnect import connection
 @app.route('/')
 def hello():
@@ -62,11 +62,6 @@ class RegistrationForm(Form):
 			self.username.errors.append("Username should not contain special characters")
 		return flag
 
-
-
-########@app.route('/NoteUpload/register/',methods=["GET"])
-########def reg_form():
-########	return render_template('register.html')
 @app.route('/NoteUpload/register/',methods=["GET","POST"])
 def on_register():
 	session["login_count"]=0
